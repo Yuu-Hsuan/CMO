@@ -15,7 +15,9 @@
 
 ## 檔案概述
 ### 來自遊戲
-1. `C:\Users\yuhsu\pycmo-main\scripts\steam_demo\demo.py` : 腳本的主檔案，負責啟動並執行情境。它包含了控制情境運行的邏輯，例如設置單位、更新指令、執行回合等。
+1. `C:\Users\yuhsu\pycmo-main\scripts\steam_demo\demo.py` :
+
+   腳本的主檔案，負責啟動並執行情境。它包含了控制情境運行的邏輯，例如設置單位、更新指令、執行回合等。
 
 ### 來自pycmo
 1. `C:\Users\yuhsu\anaconda3\envs\cmo\lib\site-packages\pycmo\env\cmo_env.py` :
