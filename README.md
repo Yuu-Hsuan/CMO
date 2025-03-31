@@ -36,6 +36,15 @@
 
    包含一些工具函數，像是 `sleep` 等延遲控制，用來在操作之間進行暫停。這在等待遊戲進行或視窗顯示時非常重要。
 
+### 其他重要
+1. `C:\Users\yuhsu\pycmo-main\pycmo\configs\config.py` :
+
+   建立並回傳一組設定參數（以字典形式），供 pycmo 框架在執行時使用。
+
+   紀錄內容於 : `C:\Program Files (x86)\Steam\steamapps\common\Command - Modern Operations\ImportExport`
+   * Steam demo.inst - 主要觀察資料文件
+   * Steam demo_scen_has_ended.inst - 用於標記場景是否結束的文件
+
 ## 新增專案
 `C:\Users\yuhsu\pycmo-main\scripts` :　為放置腳本的地方，於此建立要 run 的專案
 
