@@ -13,6 +13,10 @@
 5. `cd "C:\Users\yuhsu\pycmo-main\scripts\steam_demo"` :試跑 step1
 6. `python demo.py` :試跑 step2
 
+## 普通執行
+1. 打開cmo
+3. `conda activate cmo`
+
 ## 檔案概述
 ### manager類別
 1. `C:\Users\yuhsu\pycmo-main\scripts\steam_demo\demo.py` :
