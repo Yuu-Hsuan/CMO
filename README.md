@@ -14,12 +14,12 @@
 6. `python demo.py` :試跑 step2
 
 ## 檔案概述
-### 來自遊戲
+### manager類別
 1. `C:\Users\yuhsu\pycmo-main\scripts\steam_demo\demo.py` :
 
    腳本的主檔案，負責啟動並執行情境。它包含了控制情境運行的邏輯，例如設置單位、更新指令、執行回合等。(示範腳本)
 
-### 來自pycmo
+### worker類別
 1. `C:\Users\yuhsu\anaconda3\envs\cmo\lib\site-packages\pycmo\env\cmo_env.py` :
 
    定義環境物件，負責與外部情境進行交互。檔案中的 `step` 函數會向情境發送命令，並檢查遊戲是否結束。如果遊戲還未結束，該檔案會繼續發送命令或重啟情境。
@@ -35,3 +35,9 @@
 4. `C:\Users\yuhsu\anaconda3\envs\cmo\lib\site-packages\pycmo\lib\tools.py` :
 
    包含一些工具函數，像是 `sleep` 等延遲控制，用來在操作之間進行暫停。這在等待遊戲進行或視窗顯示時非常重要。
+
+## 新增專案
+`C:\Users\yuhsu\pycmo-main\scripts` :　為放置腳本的地方，於此建立要 run 的專案
+
+
+
