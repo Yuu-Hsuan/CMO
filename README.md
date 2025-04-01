@@ -15,7 +15,11 @@
 
 ## 普通執行
 1. 打開cmo
-3. `conda activate cmo`
+2. `conda activate cmo`
+3. `cd "C:\Users\yuhsu\pycmo-main\scripts\steam_demo"`
+4. `python demo.py`
+5. 到 cmo 選取 >> File(左上角) >> Load recent: >> steam_demo
+   * 打開名稱 註記在`demo.py`的第21-23行
 
 ## 檔案概述
 ### manager類別
