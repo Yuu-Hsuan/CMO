@@ -8,7 +8,7 @@
 ### 2. conda創建環境(name:cmo)
 1. `conda create -n cmo python=3.10` : 創建環境(name:cmo)
 2. `conda activate cmo` : 開啟環境
-3. `cd C:\Users\yuhsu\pycmo-main` 
+3. `cd C:\Users\yuhsu\pycmo-main` : pycmo 解壓縮放到這
 4. `pip install .` : 安裝[pycmo](https://github.com/duyminh1998/pycmo)
 5. `cd "C:\Users\yuhsu\pycmo-main\scripts\steam_demo"` :試跑 step1
 6. `python demo.py` :試跑 step2
