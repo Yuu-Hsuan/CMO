@@ -23,4 +23,4 @@
 1. 打開cmo
 2. `conda activate cmo`
 3. `cd "C:\Users\yuhsu\pycmo-main\scripts\mydemo3"`
-4. 4. `python demo.py`
+4. `python demo.py`
