@@ -7,7 +7,7 @@
 (路徑:`C:\Users\yuhsu\OneDrive\桌面\pycmopen`)
 
 ### 2. conda創建環境(name:cmo)
-1. `conda create -n fcmo python=3.10` : 創建環境(name:fcmo)
+1. `conda create -n fcmo python=3.10` : 創建環境(name:`fcmo`)
 2. `conda activate fcmo` : 開啟環境
 3. `cd C:\Users\yuhsu\OneDrive\桌面\pycmopen`
 4. `pip install -e .` : 安裝
