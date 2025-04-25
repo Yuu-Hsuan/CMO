@@ -4,7 +4,8 @@
 
 ### 1. pycmopen clone
 連結:[THESE](https://forgejo.taiyopen.com/Taiyopen/pycmopen/src/branch/main)
-(路徑:`C:\Users\yuhsu\OneDrive\桌面\pycmopen`)
+(放置路徑:`C:\Users\yuhsu\OneDrive\桌面\pycmopen`)
+(放哪都行)
 
 ### 2. conda創建環境(name:cmo)
 1. `conda create -n fcmo python=3.10` : 創建環境(name:`fcmo`)
