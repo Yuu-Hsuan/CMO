@@ -11,7 +11,7 @@
 2. `conda activate fcmo` : 開啟環境
 3. `cd C:\Users\yuhsu\OneDrive\桌面\pycmopen`
 4. `pip install -e .` : 安裝
-5. 安裝cuda及pytorch:`pip install torch==2.5.0 torchvision==0.20.0 torchaudio==2.5.0 --index-url https://download.pytorch.org/whl/cu124`
+5. 安裝cuda及pytorch:`pip install torch==2.5.0 torchvision==0.20.0 torchaudio==2.5.0 --index-url https://download.pytorch.org/whl/cu124` (4040系顯卡)
 
 ### 3. 架設cmo場景(以feudal為例)
 1. 將`C:\Users\yuhsu\OneDrive\桌面\pycmopen\pycmo\configs\config.py`的`config_template.py`改名為`config.py`，並更新內容:[路徑](https://github.com/Yuu-Hsuan/CMO/blob/main/%E6%9E%B6%E8%A8%AD/init.py)
