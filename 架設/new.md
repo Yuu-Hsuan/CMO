@@ -32,3 +32,4 @@
 ### 4.執行feudal的`MyScenario1`環境
 1. 打開遊戲(小視窗左上角打叉) 、 自行切換為英文輸入法
 2. 進入環境輸入: `python .\scripts\Feudal\demo.py --config=scripts/Feudal/config.yaml`
+3. 讓遊戲自動執行，直到出現遊戲畫面後，按下左上角的撥放鍵
