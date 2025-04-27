@@ -27,7 +27,7 @@
 10. 至`C:\Program Files (x86)\Steam\steamapps\common\Command - Modern Operations\ImportExport`(遊戲儲存位置)觀察是否儲存成功，滑到最下面，會有三個檔
     * MyScenario1.inst
     * MyScenario1  (XML檔)
-    * MyScenario1_scen_has_ended.inst
+    * (此檔案執行後才出現): MyScenario1_scen_has_ended.inst
 
 ### 4.執行feudal的`MyScenario1`環境
 1. 打開遊戲(小視窗左上角打叉) 、 自行切換為英文輸入法
