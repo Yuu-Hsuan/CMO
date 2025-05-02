@@ -1,0 +1,8 @@
+# config.yaml
+scenario_name: "MyScenario1"
+player_side: "Taiwan"
+scenario_script_folder_name: "FeUdal"
+debug_mode: false
+agent:
+  ac_name: "Cheng Kung"
+  target_name: "Cheng Kung 002"
