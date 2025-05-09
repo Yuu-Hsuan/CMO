@@ -75,3 +75,4 @@ rl= 1e-3
 ![image](https://github.com/Yuu-Hsuan/CMO/blob/main/mydis/clocetome/graph/11.png)
 
 rl= 5e-4
+![image](https://github.com/Yuu-Hsuan/CMO/blob/main/mydis/clocetome/graph/22.png)
