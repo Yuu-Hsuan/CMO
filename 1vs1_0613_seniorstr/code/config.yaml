@@ -1,0 +1,9 @@
+# config.yaml
+scenario_name: "1_VS_1"
+player_side: "Taiwan"
+scenario_script_folder_name: "FeUdal11"
+debug_mode: false
+agent:
+  ac_name: "1101 Cheng Kung [Perry Class, Kuang Hua I]"
+  target_name: "Type 053H3 Jiangwei II [521 Jiaxing]"
+ 
