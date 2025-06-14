@@ -1,0 +1,15 @@
+# config.yaml
+scenario_name: "T5C5"
+player_side: "T"
+scenario_script_folder_name: "FeUdal55"
+debug_mode: false
+agent:
+  target_name: "target"
+  manager_name: "1101 Cheng Kung [Perry Class, Kuang Hua I]"
+  friendly_names:
+    - "1101 Cheng Kung [Perry Class, Kuang Hua I]"
+    - "601 Lung Chiang [PSMM Mk5 Mod]"
+    - "603 Jing Chiang [Kuang Hua III]"
+    - "605 Dang Chiang [Kuang Hua III, Hsiung Feng III Mod]"
+    - "AOE 532 Panshih"
+ 
