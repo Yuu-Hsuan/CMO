@@ -485,6 +485,10 @@ class MyAgent(BaseAgent):
         返回:
             CMO 命令字串
         """
+        # 若艦艇已不存在（被擊沉／刪除），直接跳過
+        if unit is None:
+            return ""          # 也可寫成 "pass" 或留空行
+
         # 1) 先處理 0-3 四個移動命令
         if action == 0:   # 北
             return set_unit_heading_and_speed(self.player_side, unit.Name, 0, 30)
