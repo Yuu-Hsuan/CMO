@@ -24,6 +24,7 @@ import logging
 import math
 from typing import Tuple
 import time
+import os
 
 # 导入FeUdal模型
 from scripts.FeUdal55.FeUdal_agent import Feudal_ManagerAgent, Feudal_WorkerAgent, FeUdalCritic
@@ -215,18 +216,17 @@ class MyAgent(BaseAgent):
         intrinsic_rewards = []
         for t in range(len(raw_goals)):
             if t + c < len(states):
-                delta = states[t+c] - states[t]
-                # 投影 delta 到與 raw_goal 相同的維度
-                delta_emb = self.manager.delta_fc(delta)
+                delta = (states[t+c] - states[t]).unsqueeze(0)        # [1, F]
+                delta_emb = self.manager.delta_fc(delta)              # [1, k]
                 cos_sim = F.cosine_similarity(
-                    F.normalize(delta_emb, dim=-1, p=2),
-                    F.normalize(raw_goals[t], dim=-1, p=2),
+                    F.normalize(delta_emb, dim=-1, p=2, eps=1e-8),
+                    F.normalize(raw_goals[t].unsqueeze(0), dim=-1, p=2, eps=1e-8),
                     dim=-1
-                ).clamp(-1, 1)
+                ).clamp(-1, 1).squeeze()
                 intrinsic_rewards.append(cos_sim)
         if len(intrinsic_rewards) == 0:
             return torch.zeros(0, device=states.device, dtype=torch.float32)
-        return torch.stack(intrinsic_rewards).squeeze(-1)  # 確保輸出是 [T]
+        return torch.stack(intrinsic_rewards)  # [T-c]
 
     def action(self, features: FeaturesFromSteam, VALID_FUNCTIONS: AvailableFunctions) -> str:
         """
@@ -513,9 +513,8 @@ class MyAgent(BaseAgent):
                     target = c
 
             if target and 'ID' in target:
-                fn_list = [f for f in vf if f.name == "auto_attack_contact"]
-                if fn_list:
-                    fn = fn_list[0]
+                fn = next((f for f in vf if "auto_attack" in f.name), None)
+                if fn:
                     return fn.corresponding_def(unit.ID, target['ID'])
             return ""
 
@@ -529,14 +528,27 @@ class MyAgent(BaseAgent):
 
         # 解包
         states, actions, ext, next_states, dones, raw_goals = zip(*self.episode_memory)
-        T = len(states)  # 時間步數
+        T = len(states)
+        if T <= self.args.manager_dilation:
+            self.logger.warning(f"Skip training: episode length {T} ≤ dilation {self.args.manager_dilation}")
+            self.episode_memory.clear()
+            return
+
         A = len(self.friendly_order)  # 艦艇數量
         feat_dim = self.args.input_size  # 特徵維度
         idx_mgr = self.friendly_order.index(self.manager_name)  # Manager 艦的索引
 
-        # 轉 tensor (使用更高效的方式)
-        states = torch.from_numpy(np.stack(states)).float().to(self.device)       # [T,A,feat_dim]
-        next_states = torch.from_numpy(np.stack(next_states)).float().to(self.device)  # [T,A,feat_dim]
+        # 先把「一個 time step」轉成 [A,F] 的 ndarray
+        states_np = np.stack([np.stack(step, axis=0) for step in states], axis=0)  # [T,A,F]
+        next_states_np = np.stack([np.stack(step, axis=0) for step in next_states], axis=0)  # [T,A,F]
+        
+        # 轉 tensor
+        states = torch.from_numpy(states_np).float().to(self.device)       # [T,A,feat_dim]
+        next_states = torch.from_numpy(next_states_np).float().to(self.device)  # [T,A,feat_dim]
+        
+        # 確保形狀正確
+        assert states.shape[1] == len(self.friendly_order), f"States shape mismatch: {states.shape[1]} != {len(self.friendly_order)}"
+        
         actions = torch.tensor(actions, dtype=torch.long, device=self.device)        # [T,A]
         ext_rewards = torch.tensor(ext, dtype=torch.float32, device=self.device)      # [T,A]
         dones = torch.tensor(dones, dtype=torch.float32, device=self.device)      # [T]
@@ -576,7 +588,8 @@ class MyAgent(BaseAgent):
         # 取 Manager 的 raw_goal（T', K）並 broadcast 到每艦
         raw_goal_exp = raw_goals_wrk[self.args.manager_dilation:].repeat_interleave(A, dim=0)  # [T'*A, K]
         logits_w, _ = self.worker(flat_states, zeros, raw_goal_exp)
-        logits_w = logits_w.view(-1, A, self.args.n_actions)
+        Tprime = states[self.args.manager_dilation:].size(0)
+        logits_w = logits_w.view(Tprime, A, self.args.n_actions)
         log_probs_w = F.log_softmax(logits_w, dim=-1)
         action_log_probs_w = log_probs_w.gather(-1, actions[self.args.manager_dilation:].unsqueeze(-1)).squeeze(-1)
         policy_loss_w = -(action_log_probs_w * advantages_w.detach()).mean()
@@ -604,8 +617,8 @@ class MyAgent(BaseAgent):
         delta = states[self.args.manager_dilation:, idx_mgr] - states[:-self.args.manager_dilation, idx_mgr]
         delta_emb = self.manager.delta_fc(delta)
         cos_term = F.cosine_similarity(
-            F.normalize(delta_emb, dim=-1, p=2),
-            F.normalize(raw_goals_mgr[:-self.args.manager_dilation], dim=-1, p=2),
+            F.normalize(delta_emb, dim=-1, p=2, eps=1e-8),
+            F.normalize(raw_goals_mgr[:-self.args.manager_dilation], dim=-1, p=2, eps=1e-8),
             dim=-1
         ) + 1      # +1 保持正值
 
@@ -621,6 +634,12 @@ class MyAgent(BaseAgent):
             policy_loss_m + 
             value_loss_m
         )
+
+        # 檢查是否有 NaN
+        if torch.isnan(total_loss).any():
+            self.logger.error("NaN detected in loss computation!")
+            self.episode_memory.clear()
+            return
 
         # 更新參數
         self.optimizer.zero_grad()
