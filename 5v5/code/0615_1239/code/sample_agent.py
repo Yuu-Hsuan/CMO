@@ -26,7 +26,7 @@ from typing import Tuple
 import time
 
 # 导入FeUdal模型
-from scripts.FeUdal11.FeUdal_agent import Feudal_ManagerAgent, Feudal_WorkerAgent, FeUdalCritic
+from scripts.FeUdal55.FeUdal_agent import Feudal_ManagerAgent, Feudal_WorkerAgent, FeUdalCritic
 
 # -----------------------  常數區  -----------------------
 ENEMY_MISSION = "5VS5"      # ★你的劇本裡真正的任務名稱
