@@ -116,7 +116,7 @@ class MyAgent(BaseAgent):
         self.episode_done = False
         self.episode_count = 0
         self.episode_memory = []
-        self.max_episode_steps = 200
+        self.max_episode_steps = 1500
         self.episode_init = True
         self.need_reset = False   # 觸發 reset 的總開關
         #self.waiting_delete = False   # 已送 delete、等 CMO 真正刪除
