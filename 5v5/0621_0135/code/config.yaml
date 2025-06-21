@@ -1,0 +1,15 @@
+# config.yaml
+scenario_name: "7_VS_7"
+player_side: "Taiwan"
+scenario_script_folder_name: "FeUdal55_new"
+debug_mode: false
+agent:
+  target_name: "target"
+  manager_name: "T1"
+  friendly_names:
+    - "T1"
+    - "T2"
+    - "T3"
+    - "T4"
+    - "T5"
+ 
