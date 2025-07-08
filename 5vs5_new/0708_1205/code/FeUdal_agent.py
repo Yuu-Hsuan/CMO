@@ -15,44 +15,45 @@ class Feudal_ManagerAgent(nn.Module):
         # self.manager_fc2 = nn.Linear(args.manager_hidden_dim, args.state_dim_d)
 
         # Actor：輸出連續動作（goal）的均值 μ
-        self.mu_head = nn.Linear(args.manager_hidden_dim, args.n_agents * args.state_dim_d)
+        self.mu_head = nn.Linear(args.manager_hidden_dim, args.state_dim_d)
         # 全域可學對數標準差 log σ
         self.logstd = nn.Parameter(torch.zeros(args.state_dim_d))
         # Critic：狀態價值 V(sᴳ)
         self.value_head = nn.Linear(args.manager_hidden_dim, 1)
 
     def init_hidden(self, batch_size: int = 1):
-        # 初始化 Manager 隱藏與 cell 狀態: [num_layers, batch_size, hidden_dim]
+        # 初始化 Manager 隱藏與 cell 狀態: [num_layers, batch_size * n_agents, hidden_dim]
+        B, A = batch_size, self.args.n_agents
         device = next(self.parameters()).device
-        h = torch.zeros(1, batch_size, self.args.manager_hidden_dim, device=device)
-        c = torch.zeros(1, batch_size, self.args.manager_hidden_dim, device=device)
+        h = torch.zeros(1, B*A, self.args.manager_hidden_dim, device=device)
+        c = torch.zeros(1, B*A, self.args.manager_hidden_dim, device=device)
         return (h, c)
 
     def forward(self, inputs, hidden):
-        # inputs: [T, B, feat]
-        T, B, feat = inputs.shape
-        x = inputs
+        # inputs: [T, B, A, feat]
+        T, B, A, feat = inputs.shape
+        # fold agent dim into batch
+        x = inputs.view(T, B*A, feat)
         # feature transform
-        features_flat = F.relu(self.manager_fc1(x))  # [T, B, manager_hidden_dim]
+        features_flat = F.relu(self.manager_fc1(x))  # [T, B*A, manager_hidden_dim]
         # RNN forward
-        out, (h, c) = self.manager_rnn(features_flat, hidden)  # out: [T, B, manager_hidden_dim]
+        out, (h, c) = self.manager_rnn(features_flat, hidden)  # out: [T, B*A, manager_hidden_dim]
         
         # --- 連續 policy head ---
-        mu = self.mu_head(out)    # [T,B,A*d]
-        mu = mu.view(T, B, self.args.n_agents, self.args.state_dim_d)
+        mu = self.mu_head(out)                        # [T,B*A,d]
         std = torch.exp(self.logstd)                  # broadcast 到 [d]
 
         dist = torch.distributions.Normal(mu, std)
         g_flat = dist.rsample()                   # re-parameter 化，可反向傳遞
-        logp_flat = dist.log_prob(g_flat).sum(-1, keepdim=True)  # [T,B,A,1]
+        logp_flat = dist.log_prob(g_flat).sum(-1, keepdim=True)  # [T,B*A,1]
 
         # --- Critic head ---
-        v_flat = self.value_head(out)             # [T,B,1]
+        v_flat = self.value_head(out)             # [T,B*A,1]
 
         # --- reshape 回 (T,B,A,⋯) ---
-        goal = g_flat.view(T, B, self.args.n_agents, self.args.state_dim_d)
-        logp = logp_flat.view(T, B, self.args.n_agents)               # 之後算 policy loss
-        value = v_flat.squeeze(-1).view(T, B)      # V(sᴳₜ)
+        goal = g_flat.view(T, B, A, self.args.state_dim_d)
+        logp = logp_flat.view(T, B, A)               # 之後算 policy loss
+        value = v_flat.squeeze(-1).view(T, B, A)      # V(sᴳₜ)
 
         return goal, logp, value, (h, c)
     
@@ -109,3 +110,6 @@ class FeUdalCritic(nn.Module):
         # 估計狀態值
         value = self.value_network(inputs)
         return value
+    
+    
+
