@@ -219,6 +219,7 @@ class MyAgent(BaseAgent):
                 self.worker_ext_coeff = 0.5     # ➤ 新增：Worker 想看到多少外在
                 self.gamma = 0.99          # already there
                 self.lam = 0.95          # ☆ 新增 (給 GAE 用)
+                self.int_coeff = 0.1     # 內在獎勵縮放 α
 
         self.args = Args()
         
@@ -513,17 +514,19 @@ class MyAgent(BaseAgent):
 
             # 即時計算內在 rᴵ，寫回「上一個 worker transition」
             if self.prev_goal_vec is not None and self.prev_global_state is not None:
-                delta_s_d = (global_state - self.prev_global_state)[: self.args.state_dim_d]   # (3,)
+                delta_s_d = (global_state - self.prev_global_state)[1:4]   # dist, sin, cos
                 g_vec      = torch.tensor(self.prev_goal_vec, device=self.device, dtype=torch.float32) # (A,3)
                 d_vec      = torch.tensor(delta_s_d,      device=self.device, dtype=torch.float32)     # (3,)
                 r_intr_vec = self.compute_intrinsic_reward(g_vec, d_vec).cpu().numpy()                # (A,)
 
                 # ── 寫回剛才計的「前一步」──
                 r_ext_share = self.beta * (ext_r_step / self.args.n_agents)   # 單步外在
+                α = self.args.int_coeff
                 for a in range(self.args.n_agents):
-                    self.seg_buffer[last_step_idx + a]["reward"] = (
-                        r_intr_vec[a] + r_ext_share
-                    )
+                    t = self.seg_buffer[last_step_idx + a]
+                    t["reward"] = α * r_intr_vec[a] + r_ext_share
+                    t["r_int_raw"] = float(r_intr_vec[a])                          # ★
+                    t["r_ext_raw"] = float(ext_r_step / self.args.n_agents)        # ★
             
             # 把 cost 寫回「上一個 Manager transition」
             if len(self.seg_buffer) >= (self.args.n_agents + 1):
@@ -543,7 +546,7 @@ class MyAgent(BaseAgent):
                 if self.prev_goal_vec is not None and len(self.seg_buffer) > 0:
                     # 1) intrinsic reward
                     delta_s = global_state - self.prev_global_state          # (45,)
-                    delta_s_d = delta_s[: self.args.state_dim_d]               # (3,)
+                    delta_s_d = delta_s[1:4]               # dist, sin, cos
 
                     g_vec = torch.tensor(self.prev_goal_vec, device=self.device, dtype=torch.float32)   # (A,3)
                     d_vec = torch.tensor(delta_s_d,      device=self.device, dtype=torch.float32)       # (3,)
@@ -565,7 +568,10 @@ class MyAgent(BaseAgent):
                         for t in self.seg_buffer:
                             if t["type"] == "wrk":
                                 aid = t["agent_id"]
-                                t["reward"] = r_intr_vec[aid].item() / self.c_steps + r_ext_share
+                                α = self.args.int_coeff
+                                t["reward"] = α * r_intr_vec[aid].item() / self.c_steps + r_ext_share
+                                t["r_int_raw"] = float(r_intr_vec[aid].item() / self.c_steps)    # ★
+                                t["r_ext_raw"] = float(r_ext_share)                              # ★
                             else:                               # Manager
                                 t["reward"] = r_ext_bar
 
@@ -614,17 +620,27 @@ class MyAgent(BaseAgent):
 
                 # 在遊戲結束時進行訓練
                 # 回填最後一段的 reward
-                β = self.args.worker_ext_coeff
-                r_intr_vec = self.compute_intrinsic_reward(g_vec, d_vec)        # (A,)
-                r_ext_bar  = self.ext_reward_sum / self.c_steps                 # 段平均外在
-                r_ext_share = β * r_ext_bar / self.args.n_agents                # 均分給每艘船
+                if self.prev_goal_vec is not None and self.prev_global_state is not None:
+                    delta_s = global_state - self.prev_global_state          # (45,)
+                    delta_s_d = delta_s[1:4]               # dist, sin, cos
+                    
+                    g_vec = torch.tensor(self.prev_goal_vec, device=self.device, dtype=torch.float32)   # (A,3)
+                    d_vec = torch.tensor(delta_s_d,      device=self.device, dtype=torch.float32)       # (3,)
+                    
+                    β = self.args.worker_ext_coeff
+                    r_intr_vec = self.compute_intrinsic_reward(g_vec, d_vec)        # (A,)
+                    r_ext_bar  = self.ext_reward_sum / self.c_steps                 # 段平均外在
+                    r_ext_share = β * r_ext_bar / self.args.n_agents                # 均分給每艘船
 
-                for t in self.seg_buffer:
-                    if t["type"] == "wrk":
-                        aid = t["agent_id"]
-                        t["reward"] = r_intr_vec[aid].item() / self.c_steps + r_ext_share
-                    else:                               # Manager
-                        t["reward"] = r_ext_bar
+                    for t in self.seg_buffer:
+                        if t["type"] == "wrk":
+                            aid = t["agent_id"]
+                            α = self.args.int_coeff
+                            t["reward"] = α * r_intr_vec[aid].item() / self.c_steps + r_ext_share
+                            t["r_int_raw"] = float(r_intr_vec[aid].item() / self.c_steps)    # ★
+                            t["r_ext_raw"] = float(r_ext_share)                              # ★
+                        else:                               # Manager
+                            t["reward"] = r_ext_bar
 
                 self.ext_reward_sum = 0.0               # ➤ 清零，開始累下一段
 
@@ -696,7 +712,7 @@ class MyAgent(BaseAgent):
             self.seg_buffer[-(self.args.n_agents+1)]["reward"] = r_ext_bar
             # --- cost calculation and backfill ---
             delta_full = global_state - self.prev_global_state
-            delta_mat  = np.stack([ delta_full[aid*5 : aid*5+3] for aid in range(self.args.n_agents) ])
+            delta_mat  = np.stack([ delta_full[aid*5+1 : aid*5+4] for aid in range(self.args.n_agents) ])  # dist, sin, cos
             goal_mat   = self.prev_goal_vec[:, : self.args.state_dim_d]      # (A,3)
 
             cost_vec = self.compute_intrinsic_reward(
@@ -1252,7 +1268,6 @@ class MyAgent(BaseAgent):
         
         # 提取 Manager 的資料
         rewards_mgr = reward_raw[:,0]                    # [T]
-        logp_mgr = torch.tensor([t["logp"] for t in traj[::Ag]], device=device)   # [T] 每 Ag 步取一個 Manager 的 logp
         
         # --- Manager delta & GAE ---
         delta_mgr = rewards_mgr + gamma * \
@@ -1262,9 +1277,9 @@ class MyAgent(BaseAgent):
         adv_mgr = compute_gae(delta_mgr, gamma, self.args.lam, done_raw[:,0])
         return_mgr = adv_mgr + val_mgr                 # for value loss
 
-        # --- Manager policy loss 乘 cost ---
+        # --- Manager policy loss (ONLY adv * cost) ---
         cost_vec = cost_raw[:,0]                         # [T]
-        loss_act_mgr = -(adv_mgr.detach() * cost_vec * logp_mgr).mean()
+        loss_act_mgr = -(adv_mgr.detach() * cost_vec).mean()
 
         # --- Worker delta & GAE ---
         # 先湊好 next value
@@ -1303,13 +1318,24 @@ class MyAgent(BaseAgent):
             (return_wk - val_wk2).pow(2).mean()
         )
 
+        # --------- 收集 raw 內／外在 ----------
+        r_int_list, r_ext_list = [], []
+        for t in traj:
+            if t["type"] == "wrk":
+                r_int_list.append(t.get("r_int_raw", 0.0))
+                r_ext_list.append(t.get("r_ext_raw", 0.0))
+
+        r_int_mean = np.mean(r_int_list) if r_int_list else 0.0
+        r_ext_mean = np.mean(r_ext_list) if r_ext_list else 0.0
+
         # ← 在這裡印出各部分
         self.logger.info(
             f"loss_act_mgr={loss_act_mgr.item():.6f} | "
             f"loss_val_mgr={loss_val_mgr.item():.6f} | "
             f"loss_act_wk={loss_act_wk.item():.6f} | "
             f"loss_val_wk={loss_val_wk.item():.6f} | "
-            f"entropy={entropy.item():.6f}"
+            f"entropy={entropy.item():.6f} | "
+            f"r_int={r_int_mean:.3f} | r_ext={r_ext_mean:.3f}"
         )
 
         # ---------- 8. 總 loss ----------
