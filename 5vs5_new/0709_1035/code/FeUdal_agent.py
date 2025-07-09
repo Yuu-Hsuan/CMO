@@ -110,18 +110,3 @@ class Feudal_WorkerAgent(nn.Module):
         v2 = self.critic_head2(out).squeeze(-1).view(T, B, A)
         v  = 0.5 * (v1 + v2)
         return logits, v, (v1, v2), (h, c)
-        
-
-# class FeUdalCritic(nn.Module):
-#     def __init__(self, input_shape, args):
-#         super(FeUdalCritic, self).__init__()
-#         self.args = args
-
-#         # 狀態值估計 V_t^M
-#         # print("&&&&&&&&&&&&&&&&&&&&&&", args.obs_shape)
-#         self.value_network = nn.Linear(input_shape, 1)
-
-#     def forward(self, inputs):
-#         # 估計狀態值
-#         value = self.value_network(inputs)
-#         return value
