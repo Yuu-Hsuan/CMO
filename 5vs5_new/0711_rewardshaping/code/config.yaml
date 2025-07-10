@@ -1,0 +1,9 @@
+# config.yaml
+scenario_name: "7_VS_7"
+player_side: "Taiwan"
+scenario_script_folder_name: "new_try"
+debug_mode: false
+agent:
+  ac_name: "T1"
+  target_name: "target"
+  
