@@ -1,9 +1,0 @@
-# config.yaml
-scenario_name: "Guard"
-player_side: "Taiwan"
-scenario_script_folder_name: "new_try"
-debug_mode: false
-agent:
-  ac_name: "1101_1"
-  target_name: "target"
-  
