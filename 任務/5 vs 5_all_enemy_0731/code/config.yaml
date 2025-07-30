@@ -1,9 +1,0 @@
-# config.yaml
-scenario_name: "T5C5"
-player_side: "T"
-scenario_script_folder_name: "single_agent_1v1"
-debug_mode: false
-agent:
-  ac_name: "T1"
-  target_name: "target"
-  
