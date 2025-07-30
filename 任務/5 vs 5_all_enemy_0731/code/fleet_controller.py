@@ -3,7 +3,7 @@ import logging
 from sample_agent import MyAgent
 from pycmo.lib.actions import delete_unit, add_unit, set_unit_to_mission
 
-MAX_STEP = 500         # 與 MyAgent.max_episode_steps 相同
+MAX_STEP = 2000         # 與 MyAgent.max_episode_steps 相同
 
 class FleetController:
     def __init__(self, player_side: str, enemy_side: str, ship_names: list[str]):
